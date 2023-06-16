@@ -3,7 +3,9 @@ resolver = "2"
 
 members = [
     "offer",
-    "token"
+    "token",
+    "token2",
+    "deployer",
 ]
 
 [profile.release]
@@ -17,4 +19,6 @@ codegen-units = 1
 lto = true
 
 [workspace.dependencies.soroban-sdk]
+version = "0.8.4"
+[workspace.dependencies.soroban-token-sdk]
 version = "0.8.4"

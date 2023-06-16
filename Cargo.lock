@@ -779,6 +779,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "soroban-nft-with-royalty-contract"
+version = "0.0.1"
+dependencies = [
+ "soroban-sdk",
+ "soroban-token-sdk",
+]
+
+[[package]]
 name = "soroban-sdk"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -831,6 +839,15 @@ dependencies = [
  "syn 2.0.18",
  "thiserror",
  "wasmparser",
+]
+
+[[package]]
+name = "soroban-token-sdk"
+version = "0.8.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "49ae7d31ee22fc39b19d8b76bcf4e2b05b238839bcae871007c9d42d894ef512"
+dependencies = [
+ "soroban-sdk",
 ]
 
 [[package]]
@@ -925,6 +942,13 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "tbmdeployer"
+version = "0.0.0"
+dependencies = [
+ "soroban-sdk",
 ]
 
 [[package]]

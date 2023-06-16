@@ -1,0 +1,17 @@
+[package]
+name = "soroban-nft-with-royalty-contract"
+description = "Soroban royalty nft token contract"
+version = "0.0.1"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+soroban-sdk = { workspace = true }
+soroban-token-sdk = { workspace = true }
+[dev_dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
+
+
