@@ -1,13 +1,20 @@
 
-use soroban_sdk::{contractimpl, contracttype, Address, Bytes, Env, Symbol, String};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String};
 use soroban_token_sdk::{TokenMetadata, TokenUtils};
 use crate::event;
+
 
 #[derive(Clone)]
 #[contracttype]
 pub struct AllowanceDataKey {
     pub from: Address,
     pub spender: Address,
+}
+
+#[contracttype]
+pub struct AllowanceValue {
+    pub amount: i128,
+    pub expiration_ledger: u32,
 }
 
 #[derive(Clone)]
@@ -24,13 +31,11 @@ pub enum DataKey {
 
 
 pub trait TokenTrait {
-    fn initialize(env: Env, admin: Address, decimal: u32, name: Bytes, symbol: Bytes, royaltyr: Address, royaltyp: u32);
+    fn initialize(env: Env, admin: Address, decimal: u32, name: String, symbol: String, royaltyr: Address, royaltyp: u32);
 
     fn allowance(env: Env, from: Address, spender: Address) -> i128;
 
-    fn increase_allowance(env: Env, from: Address, spender: Address, amount: i128);
-
-    fn decrease_allowance(env: Env, from: Address, spender: Address, amount: i128);
+    fn approve(env: Env, from: Address, spender: Address, amount: i128, expiration_ledger: u32);
 
     fn balance(env: Env, id: Address) -> i128;
 
@@ -56,9 +61,13 @@ pub trait TokenTrait {
 
     fn decimals(env: Env) -> u32;
 
-    fn name(env: Env) -> Bytes;
+    fn name(env: Env) -> String;
 
-    fn symbol(env: Env) -> Bytes;
+    fn symbol(env: Env) -> String;
+
+    fn get_royalty_recipient(env: Env) -> Address;
+
+    fn get_royalty_rate(env: Env) -> u32;
 }
 
 fn check_nonnegative_amount(amount: i128) {
@@ -66,12 +75,13 @@ fn check_nonnegative_amount(amount: i128) {
         panic!("negative amount is not allowed: {}", amount)
     }
 }
-
+#[contract]
 pub struct Token;
 
 #[contractimpl]
 impl TokenTrait for Token {
-    fn initialize(env: Env, admin: Address, decimal: u32, name: Bytes, symbol: Bytes, royaltyr: Address, royaltyp: u32) {
+    //we probably don't need to take the decimal since it will always be zero
+    fn initialize(env: Env, admin: Address, decimal: u32, name: String, symbol: String, royaltyr: Address, royaltyp: u32) {
         if has_administrator(&env) {
             panic!("already initialized")
         }
@@ -91,37 +101,37 @@ impl TokenTrait for Token {
             },
         )
     }
+    fn get_royalty_rate(env: Env) -> u32 {
+        let key = DataKey::RoyaltyP;
+        //env.storage().get_unchecked(&key).unwrap()
+        if let Some(royaltyrate) = env.storage().persistent().get::<DataKey, u32>(&key) {
+            royaltyrate
+        } else {
+            panic!("no royalty data")
+        }
+
+    }
+    fn get_royalty_recipient(env: Env) -> Address {
+        let key = DataKey::RoyaltyR;
+        //env.storage().get_unchecked(&key).unwrap()
+        if let Some(royaltyrecipient) = env.storage().persistent().get::<DataKey, Address>(&key) {
+            royaltyrecipient
+        } else {
+            panic!("no royalty recipient")
+        }
+    }
 
     fn allowance(env: Env, from: Address, spender: Address) -> i128 {
-        read_allowance(&env, from, spender)
+        read_allowance(&env, from, spender).amount
     }
 
-    fn increase_allowance(env: Env, from: Address, spender: Address, amount: i128) {
+    fn approve(env: Env, from: Address, spender: Address, amount: i128, expiration_ledger: u32) {
         from.require_auth();
 
         check_nonnegative_amount(amount);
 
-        let allowance = read_allowance(&env, from.clone(), spender.clone());
-        let new_allowance = allowance
-            .checked_add(amount)
-            .expect("Updated allowance doesn't fit in an i128");
-
-        write_allowance(&env, from.clone(), spender.clone(), new_allowance);
-        event::increase_allowance(&env, from, spender, amount);
-    }
-
-    fn decrease_allowance(env: Env, from: Address, spender: Address, amount: i128) {
-        from.require_auth();
-
-        check_nonnegative_amount(amount);
-
-        let allowance = read_allowance(&env, from.clone(), spender.clone());
-        if amount >= allowance {
-            write_allowance(&env, from.clone(), spender.clone(), 0);
-        } else {
-            write_allowance(&env, from.clone(), spender.clone(), allowance - amount);
-        }
-        event::decrease_allowance(&env, from, spender, amount);
+        write_allowance(&env, from.clone(), spender.clone(), amount, expiration_ledger);
+        event::approve(&env, from, spender, amount, expiration_ledger);
     }
 
     fn balance(env: Env, id: Address) -> i128 {
@@ -206,20 +216,20 @@ impl TokenTrait for Token {
         read_decimal(&env)
     }
 
-    fn name(env: Env) -> Bytes {
+    fn name(env: Env) -> String {
         read_name(&env)
     }
 
-    fn symbol(env: Env) -> Bytes {
+    fn symbol(env: Env) -> String {
         read_symbol(&env)
     }
 }
 
-
+//balances
 pub fn read_balance(env: &Env, addr: Address) -> i128 {
     let key = DataKey::Balance(addr);
-    if let Some(balance) = env.storage().get(&key) {
-        balance.unwrap()
+    if let Some(balance) = env.storage().persistent().get::<DataKey, i128>(&key) {
+        balance
     } else {
         0
     }
@@ -227,7 +237,7 @@ pub fn read_balance(env: &Env, addr: Address) -> i128 {
 
 fn write_balance(env: &Env, addr: Address, amount: i128) {
     let key = DataKey::Balance(addr);
-    env.storage().set(&key, &amount);
+    env.storage().persistent().set(&key, &amount);
 }
 
 pub fn receive_balance(env: &Env, addr: Address, amount: i128) {
@@ -251,8 +261,8 @@ pub fn spend_balance(env: &Env, addr: Address, amount: i128) {
 
 pub fn is_authorized(env: &Env, addr: Address) -> bool {
     let key = DataKey::State(addr);
-    if let Some(state) = env.storage().get(&key) {
-        state.unwrap()
+    if let Some(state) = env.storage().persistent().get::<DataKey, bool>(&key) {
+        state
     } else {
         true
     }
@@ -260,60 +270,96 @@ pub fn is_authorized(env: &Env, addr: Address) -> bool {
 
 pub fn write_authorization(env: &Env, addr: Address, is_authorized: bool) {
     let key = DataKey::State(addr);
-    env.storage().set(&key, &is_authorized);
+    env.storage().persistent().set(&key, &is_authorized);
 }
-pub fn read_allowance(env: &Env, from: Address, spender: Address) -> i128 {
+
+//allowances
+pub fn read_allowance(env: &Env, from: Address, spender: Address) -> AllowanceValue {
     let key = DataKey::Allowance(AllowanceDataKey { from, spender });
-    if let Some(allowance) = env.storage().get(&key) {
-        allowance.unwrap()
+    if let Some(allowance) = env.storage().temporary().get::<_, AllowanceValue>(&key) {
+        if allowance.expiration_ledger < env.ledger().sequence() {
+            AllowanceValue {
+                amount: 0,
+                expiration_ledger: allowance.expiration_ledger,
+            }
+        } else {
+            allowance
+        }
     } else {
-        0
+        AllowanceValue {
+            amount: 0,
+            expiration_ledger: 0,
+        }
     }
 }
 
-pub fn write_allowance(env: &Env, from: Address, spender: Address, amount: i128) {
+pub fn write_allowance(env: &Env, from: Address, spender: Address, amount: i128, expiration_ledger: u32) {
+    let allowance = AllowanceValue {
+        amount,
+        expiration_ledger,
+    };
+
+    if amount > 0 && expiration_ledger < env.ledger().sequence() {
+        panic!("expiration_ledger is less than ledger seq when amount > 0")
+    }
+
     let key = DataKey::Allowance(AllowanceDataKey { from, spender });
-    env.storage().set(&key, &amount);
+    env.storage().temporary().set(&key.clone(), &allowance);
+
+    if amount > 0 {
+        env.storage().temporary().bump(
+            &key,
+            expiration_ledger
+                .checked_sub(env.ledger().sequence())
+                .unwrap(),
+        )
+    }
 }
 
 pub fn spend_allowance(env: &Env, from: Address, spender: Address, amount: i128) {
     let allowance = read_allowance(env, from.clone(), spender.clone());
-    if allowance < amount {
+    if allowance.amount < amount {
         panic!("insufficient allowance");
     }
-    write_allowance(env, from, spender, allowance - amount);
+    write_allowance(
+        env,
+        from,
+        spender,
+        allowance.amount - amount,
+        allowance.expiration_ledger,
+    );
 }
 
+//administrator
 pub fn has_administrator(env: &Env) -> bool {
     let key = DataKey::Admin;
-    env.storage().has(&key)
+    env.storage().instance().has(&key)
 }
 
 pub fn read_administrator(env: &Env) -> Address {
     let key = DataKey::Admin;
-    env.storage().get_unchecked(&key).unwrap()
+    env.storage().instance().get(&key).unwrap()
 }
 
 pub fn write_administrator(env: &Env, id: &Address) {
     let key = DataKey::Admin;
-    env.storage().set(&key, id);
+    env.storage().instance().set(&key, id);
 }
-
 
 // Metadata
 pub fn read_decimal(env: &Env) -> u32 {
     let util = TokenUtils::new(env);
-    util.get_metadata_unchecked().unwrap().decimal
+    util.get_metadata().decimal
 }
 
-pub fn read_name(env: &Env) -> Bytes {
+pub fn read_name(env: &Env) -> String {
     let util = TokenUtils::new(env);
-    util.get_metadata_unchecked().unwrap().name
+    util.get_metadata().name
 }
 
-pub fn read_symbol(env: &Env) -> Bytes {
+pub fn read_symbol(env: &Env) -> String {
     let util = TokenUtils::new(env);
-    util.get_metadata_unchecked().unwrap().symbol
+    util.get_metadata().symbol
 }
 
 pub fn write_metadata(env: &Env, metadata: TokenMetadata) {
@@ -324,9 +370,9 @@ pub fn write_metadata(env: &Env, metadata: TokenMetadata) {
 //royalty
 pub fn write_royalty(env: &Env, recipient: Address) {
     let key = DataKey::RoyaltyR ;
-    env.storage().set(&key, &recipient);
+    env.storage().instance().set(&key, &recipient);
 }
 pub fn write_royalty_rate(env: &Env, percentage: u32) {
     let key = DataKey::RoyaltyP;
-    env.storage().set(&key, &percentage);
+    env.storage().instance().set(&key, &percentage);
 }

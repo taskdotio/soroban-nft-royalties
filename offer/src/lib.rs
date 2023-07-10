@@ -1,42 +1,24 @@
+//! This contract implements trading of one token pair between one seller and
+//! multiple buyer.
+//! It demonstrates one of the ways of how trading might be implemented.
 #![no_std]
 
-use soroban_sdk::{contracterror, contractimpl, contracttype, unwrap::UnwrapOptimized,  token, Address, Env};
+use soroban_sdk::{
+    contract, contractimpl, contracttype, token, unwrap::UnwrapOptimized, Address, Env,
+};
 
-
-mod royalty_index {
-    soroban_sdk::contractimport!(
-        file = "../target/wasm32-unknown-unknown/release/soroban_asset_royalty_index.wasm"
-    );
-}
 #[derive(Clone)]
 #[contracttype]
 pub enum DataKey {
     Offer,
 }
 
-#[contracterror]
-#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
-#[repr(u32)]
-pub enum Error {
-    ContractAlreadyInitialized = 1,
-    ContractNotInitialized = 2,
-    InvalidAuth = 3,
-    RoyaltyAlreadyWithdrawn = 4,
-    InvalidInvoker = 5,
-    InvalidArguments = 6,
-    InvalidRoyaltyAsset = 7,
-}
-
-#[contracttype]
+// Represents an offer managed by the SingleOffer contract.
+// If a seller wants to sell 1000 XLM for 100 USDC the `sell_price` would be 1000
+// and `buy_price` would be 100 (or 100 and 10, or any other pair of integers
+// in 10:1 ratio).
 #[derive(Clone)]
-//pub enum StorageKey {
-  //  Parent,       // Address
-  //  Child,        // Address
-  //  TokenAddress, // Address
-  //  Amount,       // i128
-  //  Step,         // u64
-  //  Latest,       // u64
-//}
+#[contracttype]
 pub struct Offer {
     // Owner of this offer. Sells sell_token to get buy_token.
     pub seller: Address,
@@ -46,62 +28,42 @@ pub struct Offer {
     pub sell_price: u32,
     // Seller-defined price of the buy token in arbitrary units.
     pub buy_price: u32,
-    // these are set by the contract.
-    pub royalty_recipient: Address,
-    pub royalty_pct: u32,
 }
 
-pub struct RoyaltyOfferContract;
+#[contract]
+pub struct SingleOffer;
 
-pub trait RoyaltyOfferTrait {
-    fn create(
-        e: Env,
-        seller: Address,         // the seller
-        royalty_index: Address,  // the royalty index
-        sell_token: Address,     // The sell token id
-        buy_token: Address,      // the buy token id
-        sell_price: u32,           // seller defined price of sell token
-        buy_price: u32,              // serller defined price of buy token
-    ) -> Result<(), Error>;
-    fn trade(e: Env, buyer: Address, buy_token_amount: i128, min_sell_token_amount: i128) -> Result<(), Error>;
+/*
+How this contract should be used:
 
-    fn get_offer(e: Env) -> Offer;
-    fn updt_price(e: Env, sell_price: u32, buy_price: u32);
-
-    // When `seller withdraw` is invoked, the contract will transfer the royalty if there is any.
-    fn s_withdraw(e: Env, token: Address, amount: i128) -> Result<(), Error>;
-    fn r_withdraw(e: Env, token: Address, amount: i128) -> Result<(), Error>;
-}
-
+1. Call `create` once to create the offer and register its seller.
+2. Seller may transfer arbitrary amounts of the `sell_token` for sale to the
+   contract address for trading. They may also update the offer price.
+3. Buyers may call `trade` to trade with the offer. The contract will
+   immediately perform the trade and send the respective amounts of `buy_token`
+   and `sell_token` to the seller and buyer respectively.
+4. Seller may call `withdraw` to claim any remaining `sell_token` balance.
+*/
 #[contractimpl]
-impl RoyaltyOfferTrait for RoyaltyOfferContract {
-    fn create(
+impl SingleOffer {
+    // Creates the offer for seller for the given token pair and initial price.
+    // See comment above the `Offer` struct for information on pricing.
+    pub fn create(
         e: Env,
         seller: Address,
-        royalty_index: Address, // this should be derived from sell_token but not done yet.
         sell_token: Address,
         buy_token: Address,
         sell_price: u32,
         buy_price: u32,
-    ) -> Result<(), Error> {
-        if e.storage().has(&DataKey::Offer) {
+    ) {
+        if e.storage().instance().has(&DataKey::Offer) {
             panic!("offer is already created");
         }
-
         if buy_price == 0 || sell_price == 0 {
             panic!("zero price is not allowed");
         }
-
         // Authorize the `create` call by seller to verify their identity.
         seller.require_auth();
-        //verify there is royalty info.
-        let royaltyclient = royalty_index::Client::new(&e, &royalty_index);
-        let roylatydata: (Address, Address, Address, u32) = royaltyclient.get();
-        let (royalty_issuer, royalty_asset, royalty_recipient, royalty_pct) = roylatydata;
-        if royalty_asset != sell_token {
-            return Err(Error::InvalidRoyaltyAsset);
-        }
-         
         write_offer(
             &e,
             &Offer {
@@ -110,80 +72,73 @@ impl RoyaltyOfferTrait for RoyaltyOfferContract {
                 buy_token,
                 sell_price,
                 buy_price,
-                royalty_recipient,
-                royalty_pct,
             },
         );
-        Ok(())
     }
 
-    fn trade(e: Env, buyer: Address, buy_token_amount: i128, min_sell_token_amount: i128) {
+    // Trades `buy_token_amount` of buy_token from buyer for `sell_token` amount
+    // defined by the price.
+    // `min_sell_amount` defines a lower bound on the price that the buyer would
+    // accept.
+    // Buyer needs to authorize the `trade` call and internal `transfer` call to
+    // the contract address.
+    pub fn trade(e: Env, buyer: Address, buy_token_amount: i128, min_sell_token_amount: i128) {
         // Buyer needs to authorize the trade.
         buyer.require_auth();
-    
+
         // Load the offer and prepare the token clients to do the trade.
         let offer = load_offer(&e);
         let sell_token_client = token::Client::new(&e, &offer.sell_token);
         let buy_token_client = token::Client::new(&e, &offer.buy_token);
-        let royalty_percent = offer.royalty_pct;
-    
+
         // Compute the amount of token that buyer needs to receive.
         let sell_token_amount = buy_token_amount
             .checked_mul(offer.sell_price as i128)
             .unwrap_optimized()
             / offer.buy_price as i128;
-    
+
         if sell_token_amount < min_sell_token_amount {
             panic!("price is too low");
         }
-    
+
         let contract = e.current_contract_address();
-    
-        // Calculate the royalty amount and the seller's share
-        let royalty_amount = (buy_token_amount * royalty_percent as i128) / 100;
-        let seller_amount = buy_token_amount - royalty_amount;
-    
-        // Perform the trade in 4 `transfer` steps.
+
+        // Perform the trade in 3 `transfer` steps.
         // Note, that we don't need to verify any balances - the contract would
         // just trap and roll back in case if any of the transfers fails for
         // any reason, including insufficient balance.
-    
+
         // Transfer the `buy_token` from buyer to this contract.
         // This `transfer` call should be authorized by buyer.
-
+        // This could as well be a direct transfer to the seller, but sending to
+        // the contract address allows building more transparent signature
+        // payload where the buyer doesn't need to worry about sending token to
+        // some 'unknown' third party.
         buy_token_client.transfer(&buyer, &contract, &buy_token_amount);
         // Transfer the `sell_token` from contract to buyer.
         sell_token_client.transfer(&contract, &buyer, &sell_token_amount);
         // Transfer the `buy_token` to the seller immediately.
-        buy_token_client.transfer(&contract, &offer.seller, &seller_amount);
-        // Transfer the `buy_token` to the royalty recipient, this might need to be stored in the contract as a balance if we want to.
-        buy_token_client.transfer(&contract, &offer.royalty_recipient, &royalty_amount);
+        buy_token_client.transfer(&contract, &offer.seller, &buy_token_amount);
     }
-    
-//this is not yet implemented as we need to setup a place to store the balance.
 
-    fn r_withdraw(e: Env, token: Address, amount: i128) {
+    // Sends amount of token from this contract to the seller.
+    // This is intentionally flexible so that the seller can withdraw any
+    // outstanding balance of the contract (in case if they mistakenly
+    // transferred wrong token to it).
+    // Must be authorized by seller.
+    pub fn withdraw(e: Env, token: Address, amount: i128) {
         let offer = load_offer(&e);
-        offer.royalty_recipient.require_auth();
-       
+        offer.seller.require_auth();
         token::Client::new(&e, &token).transfer(
-            &e.current_contract_address(), //from this contract
-            &offer.seller, //to the seller
-            &amount, //in this amount which should be a balance stored
-        );
-    }
-    
-    fn s_withdraw(e: Env, token: Address, amount: i128) {
-        let offer = load_offer(&e);
-        offer.seller.require_auth(); //require the sellers auth
-        token::Client::new(&e, &token).transfer(
-            &e.current_contract_address(),//from this contract
-            &offer.seller, //to the seller
-            &amount,// the amount requested
+            &e.current_contract_address(),
+            &offer.seller,
+            &amount,
         );
     }
 
-    fn updt_price(e: Env, sell_price: u32, buy_price: u32) {
+    // Updates the price.
+    // Must be authorized by seller.
+    pub fn updt_price(e: Env, sell_price: u32, buy_price: u32) {
         if buy_price == 0 || sell_price == 0 {
             panic!("zero price is not allowed");
         }
@@ -193,16 +148,19 @@ impl RoyaltyOfferTrait for RoyaltyOfferContract {
         offer.buy_price = buy_price;
         write_offer(&e, &offer);
     }
-    fn get_offer(e: Env) -> Offer {
-        let offer = load_offer(&e);
-        offer
+
+    // Returns the current state of the offer.
+    pub fn get_offer(e: Env) -> Offer {
+        load_offer(&e)
     }
 }
 
 fn load_offer(e: &Env) -> Offer {
-    e.storage().get_unchecked(&DataKey::Offer).unwrap()
+    e.storage().instance().get(&DataKey::Offer).unwrap()
 }
 
 fn write_offer(e: &Env, offer: &Offer) {
-    e.storage().set(&DataKey::Offer, offer);
+    e.storage().instance().set(&DataKey::Offer, offer);
 }
+
+mod test;

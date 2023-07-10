@@ -1,5 +1,5 @@
 [package]
-name = "Royalty-Offer-Contract"
+name = "royalty-offer-contract"
 version = "0.0.0"
 edition = "2021"
 publish = false
