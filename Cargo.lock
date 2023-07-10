@@ -1221,13 +1221,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tbm-indexer"
-version = "0.0.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
 name = "tbmdeployer"
 version = "0.0.0"
 dependencies = [

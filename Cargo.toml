@@ -5,7 +5,7 @@ members = [
     "offer",
     "token",
     "deployer",
-    "royalty_indexer",
+    
 ]
 
 [profile.release]
