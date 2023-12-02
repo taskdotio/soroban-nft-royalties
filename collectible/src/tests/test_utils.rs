@@ -1,0 +1,105 @@
+use crate::contract::{CollectibleContract, CollectibleContractClient};
+use crate::storage::royalties::Royalty;
+use soroban_sdk::testutils::Address as _;
+use soroban_sdk::{token, Address, Env, Map, String};
+use soroban_token_sdk::metadata::TokenMetadata;
+use token::Client as TokenClient;
+use token::StellarAssetClient as TokenAdminClient;
+
+fn create_token_contract<'a>(e: &Env, admin: &Address) -> (TokenClient<'a>, TokenAdminClient<'a>) {
+    let contract_address = e.register_stellar_asset_contract(admin.clone());
+    (
+        TokenClient::new(e, &contract_address),
+        TokenAdminClient::new(e, &contract_address),
+    )
+}
+
+pub struct TestData<'a> {
+    pub admin: Address,
+    pub supply: u64,
+    pub initial_price: u128,
+    pub initial_asset: Address,
+    pub token_metadata: TokenMetadata,
+    pub asset_metadata_uri: String,
+    pub default_royalties: Map<Address, Royalty>,
+    pub platform_royalty: Royalty,
+    pub creator_royalty: Royalty,
+    pub charity_royalty: Royalty,
+
+    pub usd_token_admin: Address,
+    pub usd_token_client: TokenClient<'a>,
+    pub usd_token_admin_client: TokenAdminClient<'a>,
+    pub eur_token_admin: Address,
+    pub eur_token_client: TokenClient<'a>,
+    pub eur_token_admin_client: TokenAdminClient<'a>,
+
+    pub contract_client: CollectibleContractClient<'a>,
+}
+
+pub fn create_test_data(env: &Env) -> TestData {
+    let admin: Address = Address::random(&env);
+    let supply: u64 = 150u64;
+
+    let token_name = "GoldMiners";
+    let token_symbol = "GMS";
+    let asset_metadata_uri = "https://kjgutsr.dfghuexvhj.net/userdata/GDVT45B2WLFKQS3XB5MUYHV3WCGEX5W2QPDLBOAIPC3MWHATI34VOULF.jpg";
+
+    let mut default_royalties: Map<Address, Royalty> = Map::new(&env);
+    let platform_royalty: Royalty = Royalty {
+        name: String::from_slice(&env, "ThePlatform"),
+        address: Address::random(&env),
+        first_sale: true,
+        percentage: 0_0100000,
+    };
+    let creator_royalty: Royalty = Royalty {
+        name: String::from_slice(&env, ""),
+        address: Address::random(&env),
+        first_sale: false,
+        percentage: 0_0300000,
+    };
+    let charity_royalty: Royalty = Royalty {
+        name: String::from_slice(&env, ""),
+        address: Address::random(&env),
+        first_sale: false,
+        percentage: 0_0200000,
+    };
+
+    default_royalties.set(platform_royalty.address.clone(), platform_royalty.clone());
+    default_royalties.set(creator_royalty.address.clone(), creator_royalty.clone());
+    default_royalties.set(charity_royalty.address.clone(), charity_royalty.clone());
+
+    let usd_token_admin: Address = Address::random(&env);
+    let (usd_token_client, usd_token_admin_client) = create_token_contract(&env, &usd_token_admin);
+    let eur_token_admin: Address = Address::random(&env);
+    let (eur_token_client, eur_token_admin_client) = create_token_contract(&env, &eur_token_admin);
+
+    let contract_client =
+        CollectibleContractClient::new(&env, &env.register_contract(None, CollectibleContract));
+
+    let initial_price: u128 = 19_9900000u128;
+    let initial_asset: Address = usd_token_client.address.clone();
+
+    TestData {
+        admin,
+        supply,
+        initial_price,
+        initial_asset,
+        token_metadata: TokenMetadata {
+            decimal: 0,
+            name: String::from_slice(&env, token_name),
+            symbol: String::from_slice(&env, token_symbol),
+        },
+        asset_metadata_uri: String::from_slice(&env, asset_metadata_uri),
+        default_royalties,
+        platform_royalty,
+        creator_royalty,
+        charity_royalty,
+        usd_token_admin,
+        usd_token_client,
+        usd_token_admin_client,
+        eur_token_admin,
+        eur_token_client,
+        eur_token_admin_client,
+        contract_client,
+    }
+}

@@ -21,3 +21,6 @@ lto = true
 
 [workspace.dependencies.soroban-sdk]
 version = "20.0.0-rc2"
+
+[workspace.dependencies.soroban-token-sdk]
+version = "20.0.0-rc2"
