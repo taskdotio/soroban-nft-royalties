@@ -2,11 +2,12 @@
 resolver = "2"
 
 members = [
-    "offer",
-    "token",
-    "deployer",
-    
+    "collectible"
 ]
+
+[profile.release-with-logs]
+inherits = "release"
+debug-assertions = true
 
 [profile.release]
 opt-level = "z"
@@ -19,6 +20,4 @@ codegen-units = 1
 lto = true
 
 [workspace.dependencies.soroban-sdk]
-version = "0.9.1"
-[workspace.dependencies.soroban-token-sdk]
-version = "0.9.1"
+version = "20.0.0-rc2"
