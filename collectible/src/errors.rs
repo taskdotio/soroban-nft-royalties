@@ -5,4 +5,6 @@ use soroban_sdk::contracterror;
 #[repr(u32)]
 pub enum SCErrors {
     AlreadyInitialized = 0,
+    ItemHasNotBeenMinted = 1,
+    ItemNumberIsInvalid = 2,
 }
