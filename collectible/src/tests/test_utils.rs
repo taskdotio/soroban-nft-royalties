@@ -1,3 +1,5 @@
+#![cfg(test)]
+
 use crate::contract::{CollectibleContract, CollectibleContractClient};
 use crate::storage::royalties::Royalty;
 use soroban_sdk::testutils::Address as _;
@@ -102,4 +104,16 @@ pub fn create_test_data(env: &Env) -> TestData {
         eur_token_admin_client,
         contract_client,
     }
+}
+
+pub fn init_with_test_data(test_data: &TestData) {
+    test_data.contract_client.initialize(
+        &test_data.admin,
+        &test_data.supply,
+        &test_data.initial_price,
+        &test_data.initial_asset,
+        &test_data.token_metadata.name,
+        &test_data.token_metadata.symbol,
+        &test_data.default_royalties,
+    );
 }

@@ -1,6 +1,7 @@
 use crate::errors::SCErrors;
 use crate::storage::core::CoreData;
 use crate::storage::royalties::Royalty;
+use crate::utils::balances::{bump_balance, get_balance};
 use crate::utils::core::{bump_instance, is_initialized, write_core_data, write_token_metadata};
 use crate::utils::royalties::{bump_royalties, write_royalties};
 use soroban_sdk::{contract, contractimpl, panic_with_error, Address, Env, Map, String};
@@ -17,6 +18,8 @@ pub trait CollectibleTrait {
         symbol: String,
         royalties: Map<Address, Royalty>,
     );
+
+    fn balance(env: Env, id: Address) -> u128;
 }
 
 #[contract]
@@ -61,5 +64,10 @@ impl CollectibleTrait for CollectibleContract {
 
         bump_instance(&env);
         bump_royalties(&env);
+    }
+
+    fn balance(env: Env, id: Address) -> u128 {
+        bump_balance(&env, &id);
+        get_balance(&env, &id)
     }
 }
