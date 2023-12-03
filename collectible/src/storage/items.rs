@@ -8,6 +8,7 @@ pub struct Item {
     pub number: u64,
     pub owner: Address,
     pub for_sale: bool,
+    pub price: u128,
 }
 
 #[contracttype]

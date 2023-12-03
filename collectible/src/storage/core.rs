@@ -10,7 +10,8 @@ pub struct CoreData {
     /// The initial price is set at the initialization of the contract along with the accepted asset,
     /// once set this can not be changed.
     pub initial_price: u128,
-    pub initial_asset: Address,
+    pub collection_currency: Address,
+    pub initial_seller: Address,
 }
 
 #[contracttype]

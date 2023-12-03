@@ -20,7 +20,7 @@ pub struct TestData<'a> {
     pub admin: Address,
     pub supply: u64,
     pub initial_price: u128,
-    pub initial_asset: Address,
+    pub initial_seller: Address,
     pub token_metadata: TokenMetadata,
     pub asset_metadata_uri: String,
     pub default_royalties: Map<Address, Royalty>,
@@ -80,12 +80,13 @@ pub fn create_test_data(env: &Env) -> TestData {
 
     let initial_price: u128 = 19_9900000u128;
     let initial_asset: Address = usd_token_client.address.clone();
+    let initial_seller: Address = Address::random(&env);
 
     TestData {
         admin,
         supply,
         initial_price,
-        initial_asset,
+        initial_seller,
         token_metadata: TokenMetadata {
             decimal: 0,
             name: String::from_slice(&env, token_name),
@@ -111,7 +112,8 @@ pub fn init_with_test_data(test_data: &TestData) {
         &test_data.admin,
         &test_data.supply,
         &test_data.initial_price,
-        &test_data.initial_asset,
+        &test_data.initial_seller,
+        &test_data.usd_token_client.address,
         &test_data.token_metadata.name,
         &test_data.token_metadata.symbol,
         &test_data.default_royalties,
