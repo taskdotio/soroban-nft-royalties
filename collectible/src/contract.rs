@@ -8,7 +8,7 @@ use crate::utils::core::{
     write_token_metadata,
 };
 use crate::utils::items::{
-    bump_item, get_item, is_item_for_sale, is_minted, is_valid_item_number, set_item,
+    bump_item, get_item, is_item_for_sale, is_minted, is_valid_item_number, write_item,
 };
 use crate::utils::royalties::{bump_royalties, get_royalties, write_royalties};
 use num_integer::div_floor;
@@ -38,6 +38,9 @@ pub trait CollectibleTrait {
     fn sell(env: Env, item_number: u64, price: u128);
 
     fn item(env: Env, number: u64) -> Item;
+
+    /// Transferring the ownership of a collectible
+    fn transfer(env: Env, item_number: u64, to: Address);
 }
 
 #[contract]
@@ -145,7 +148,7 @@ impl CollectibleTrait for CollectibleContract {
         }
 
         // We set the new owner and increase its balance
-        set_item(
+        write_item(
             &env,
             &Item {
                 number: item_number.clone(),
@@ -174,7 +177,7 @@ impl CollectibleTrait for CollectibleContract {
         item.for_sale = if price == 0 { false } else { true };
         item.price = price;
 
-        set_item(&env, &item);
+        write_item(&env, &item);
 
         bump_item(&env, &item_number);
         bump_royalties(&env);
@@ -191,5 +194,30 @@ impl CollectibleTrait for CollectibleContract {
 
         bump_item(&env, &number);
         get_item(&env, &number)
+    }
+
+    fn transfer(env: Env, item_number: u64, to: Address) {
+        bump_instance(&env);
+
+        let mut item: Item = get_item(&env, &item_number);
+        item.owner.require_auth();
+
+        // We first reduce the balance of the current owner
+        let current_owner_balance = get_balance(&env, &item.owner);
+        write_balance(&env, &item.owner, &(current_owner_balance - 1));
+
+        // We now increase new owner balance
+        let new_owner_balance = get_balance(&env, &to);
+        write_balance(&env, &to, &(new_owner_balance + 1));
+
+        // We update the ownership of the item
+        item.owner = to;
+        item.price = 0;
+        item.for_sale = false;
+        write_item(&env, &item);
+
+        bump_item(&env, &item_number);
+        bump_royalties(&env);
+        bump_balance(&env, &item.owner);
     }
 }

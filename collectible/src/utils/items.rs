@@ -39,7 +39,7 @@ pub fn get_item(env: &Env, number: &u64) -> Item {
     }
 }
 
-pub fn set_item(env: &Env, item: &Item) {
+pub fn write_item(env: &Env, item: &Item) {
     env.storage()
         .persistent()
         .set(&ItemsDataKeys::Item(item.number.clone()), item);

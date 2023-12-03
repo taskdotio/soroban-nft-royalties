@@ -79,7 +79,6 @@ pub fn create_test_data(env: &Env) -> TestData {
         CollectibleContractClient::new(&env, &env.register_contract(None, CollectibleContract));
 
     let initial_price: u128 = 19_9900000u128;
-    let initial_asset: Address = usd_token_client.address.clone();
     let initial_seller: Address = Address::random(&env);
 
     TestData {
