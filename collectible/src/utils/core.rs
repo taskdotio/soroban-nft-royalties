@@ -1,6 +1,5 @@
-use crate::storage::core::{CoreData, CoreDataKeys};
+use crate::storage::core::{CoreData, CoreDataKeys, TokenMetadata};
 use soroban_sdk::{token, Address, Env};
-use soroban_token_sdk::metadata::TokenMetadata;
 
 use crate::bumps::{INSTANCE_BUMP_CONSTANT, INSTANCE_BUMP_CONSTANT_THRESHOLD};
 
@@ -24,6 +23,13 @@ pub fn get_core_data(env: &Env) -> CoreData {
     env.storage()
         .instance()
         .get(&CoreDataKeys::CoreData)
+        .unwrap()
+}
+
+pub fn get_metadata(env: &Env) -> TokenMetadata {
+    env.storage()
+        .instance()
+        .get(&CoreDataKeys::TokenMetadata)
         .unwrap()
 }
 

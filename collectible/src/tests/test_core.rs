@@ -19,6 +19,7 @@ pub fn test_init() {
         &test_data.usd_token_client.address,
         &test_data.token_metadata.name,
         &test_data.token_metadata.symbol,
+        &test_data.token_metadata.metadata_uri,
         &test_data.default_royalties,
     );
 
@@ -32,6 +33,7 @@ pub fn test_init() {
             &test_data.usd_token_client.address,
             &test_data.token_metadata.name,
             &test_data.token_metadata.symbol,
+            &test_data.token_metadata.metadata_uri,
             &test_data.default_royalties,
         )
         .unwrap_err()

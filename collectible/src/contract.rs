@@ -1,11 +1,11 @@
 use crate::errors::SCErrors;
-use crate::storage::core::CoreData;
+use crate::storage::core::{CoreData, TokenMetadata};
 use crate::storage::items::Item;
 use crate::storage::royalties::Royalty;
 use crate::utils::balances::{bump_balance, get_balance, write_balance};
 use crate::utils::core::{
-    bump_instance, collection_currency, get_core_data, is_initialized, write_core_data,
-    write_token_metadata,
+    bump_instance, collection_currency, get_core_data, get_metadata, is_initialized,
+    write_core_data, write_token_metadata,
 };
 use crate::utils::items::{
     bump_item, get_item, is_item_for_sale, is_minted, is_valid_item_number, write_item,
@@ -13,7 +13,6 @@ use crate::utils::items::{
 use crate::utils::royalties::{bump_royalties, get_royalties, write_royalties};
 use num_integer::div_floor;
 use soroban_sdk::{contract, contractimpl, panic_with_error, Address, Env, Map, String};
-use soroban_token_sdk::metadata::TokenMetadata;
 
 pub trait CollectibleTrait {
     fn initialize(
@@ -25,6 +24,7 @@ pub trait CollectibleTrait {
         collection_currency: Address,
         name: String,
         symbol: String,
+        metadata_uri: String,
         royalties: Map<Address, Royalty>,
     );
 
@@ -41,6 +41,10 @@ pub trait CollectibleTrait {
 
     /// Transferring the ownership of a collectible
     fn transfer(env: Env, item_number: u64, to: Address);
+    fn decimals(e: Env) -> u32;
+    fn name(e: Env) -> String;
+    fn symbol(e: Env) -> String;
+    fn metadata_uri(e: Env) -> String;
 }
 
 #[contract]
@@ -57,6 +61,7 @@ impl CollectibleTrait for CollectibleContract {
         collection_currency: Address,
         name: String,
         symbol: String,
+        metadata_uri: String,
         royalties: Map<Address, Royalty>,
     ) {
         if is_initialized(&env) {
@@ -77,9 +82,9 @@ impl CollectibleTrait for CollectibleContract {
         write_token_metadata(
             &env,
             TokenMetadata {
-                decimal: 0,
                 name,
                 symbol,
+                metadata_uri,
             },
         );
 
@@ -219,5 +224,25 @@ impl CollectibleTrait for CollectibleContract {
         bump_item(&env, &item_number);
         bump_royalties(&env);
         bump_balance(&env, &item.owner);
+    }
+
+    fn decimals(e: Env) -> u32 {
+        bump_instance(&e);
+        0
+    }
+
+    fn name(e: Env) -> String {
+        bump_instance(&e);
+        get_metadata(&e).name
+    }
+
+    fn symbol(e: Env) -> String {
+        bump_instance(&e);
+        get_metadata(&e).symbol
+    }
+
+    fn metadata_uri(e: Env) -> String {
+        bump_instance(&e);
+        get_metadata(&e).metadata_uri
     }
 }

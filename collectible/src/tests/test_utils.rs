@@ -1,10 +1,10 @@
 #![cfg(test)]
 
 use crate::contract::{CollectibleContract, CollectibleContractClient};
+use crate::storage::core::TokenMetadata;
 use crate::storage::royalties::Royalty;
 use soroban_sdk::testutils::Address as _;
 use soroban_sdk::{token, Address, Env, Map, String};
-use soroban_token_sdk::metadata::TokenMetadata;
 use token::Client as TokenClient;
 use token::StellarAssetClient as TokenAdminClient;
 
@@ -22,7 +22,6 @@ pub struct TestData<'a> {
     pub initial_price: u128,
     pub initial_seller: Address,
     pub token_metadata: TokenMetadata,
-    pub asset_metadata_uri: String,
     pub default_royalties: Map<Address, Royalty>,
     pub platform_royalty: Royalty,
     pub creator_royalty: Royalty,
@@ -42,10 +41,6 @@ pub fn create_test_data(env: &Env) -> TestData {
     let admin: Address = Address::random(&env);
     let supply: u64 = 150u64;
 
-    let token_name = "GoldMiners";
-    let token_symbol = "GMS";
-    let asset_metadata_uri = "https://kjgutsr.dfghuexvhj.net/userdata/GDVT45B2WLFKQS3XB5MUYHV3WCGEX5W2QPDLBOAIPC3MWHATI34VOULF.jpg";
-
     let mut default_royalties: Map<Address, Royalty> = Map::new(&env);
     let platform_royalty: Royalty = Royalty {
         name: String::from_slice(&env, "ThePlatform"),
@@ -54,13 +49,13 @@ pub fn create_test_data(env: &Env) -> TestData {
         percentage: 0_0100000,
     };
     let creator_royalty: Royalty = Royalty {
-        name: String::from_slice(&env, ""),
+        name: String::from_slice(&env, "TheCreator"),
         address: Address::random(&env),
         first_sale: false,
         percentage: 0_0300000,
     };
     let charity_royalty: Royalty = Royalty {
-        name: String::from_slice(&env, ""),
+        name: String::from_slice(&env, "TheCharity"),
         address: Address::random(&env),
         first_sale: false,
         percentage: 0_0200000,
@@ -87,11 +82,10 @@ pub fn create_test_data(env: &Env) -> TestData {
         initial_price,
         initial_seller,
         token_metadata: TokenMetadata {
-            decimal: 0,
-            name: String::from_slice(&env, token_name),
-            symbol: String::from_slice(&env, token_symbol),
+            name: String::from_slice(&env, "GoldMiners"),
+            symbol: String::from_slice(&env, "GMS"),
+            metadata_uri: String::from_slice(&env, "https://kjgutsr.dfghuexvhj.net/userdata/GDVT45B2WLFKQS3XB5MUYHV3WCGEX5W2QPDLBOAIPC3MWHATI34VOULF.jpg"),
         },
-        asset_metadata_uri: String::from_slice(&env, asset_metadata_uri),
         default_royalties,
         platform_royalty,
         creator_royalty,
@@ -115,6 +109,7 @@ pub fn init_with_test_data(test_data: &TestData) {
         &test_data.usd_token_client.address,
         &test_data.token_metadata.name,
         &test_data.token_metadata.symbol,
+        &test_data.token_metadata.metadata_uri,
         &test_data.default_royalties,
     );
 }

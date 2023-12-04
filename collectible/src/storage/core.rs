@@ -1,4 +1,13 @@
-use soroban_sdk::{contracttype, Address};
+use soroban_sdk::{contracttype, Address, String};
+
+#[contracttype]
+pub struct TokenMetadata {
+    pub name: String,
+    pub symbol: String,
+
+    /// The Asset Metadata is a URI where the metadata is hosted, this returns an String
+    pub metadata_uri: String,
+}
 
 #[contracttype]
 pub struct CoreData {
@@ -18,9 +27,6 @@ pub struct CoreData {
 pub enum CoreDataKeys {
     CoreData,
 
-    /// The Token Metadata is the metadata defined from the soroban-token-sdk
+    /// The Token Metadata is compatible with the metadata defined from the soroban-token-sdk
     TokenMetadata,
-
-    /// The Asset Metadata is a URI where the metadata is hosted, this returns an String
-    AssetMetadataUri,
 }
