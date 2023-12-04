@@ -3,8 +3,9 @@
 use crate::errors::SCErrors;
 use crate::storage::items::Item;
 use crate::tests::test_utils::{create_test_data, init_with_test_data, TestData};
-use soroban_sdk::testutils::Address as _;
-use soroban_sdk::{Address, Env};
+use soroban_sdk::arbitrary::std::println;
+use soroban_sdk::testutils::{Address as _, Events};
+use soroban_sdk::{symbol_short, vec, Address, Env, IntoVal};
 
 #[test]
 pub fn test_initial_sale_and_invalid_number() {

@@ -55,12 +55,3 @@ pub fn is_item_for_sale(env: &Env, number: &u64) -> bool {
         true
     }
 }
-
-///
-pub fn buy_item(env: &Env, core_data: &CoreData, buyer: &Address, number: u64) {
-    if is_minted(&env, &number) {
-        // TODO: needs to be done
-        panic_with_error!(env, &SCErrors::UnexpectedError);
-    } else {
-    }
-}

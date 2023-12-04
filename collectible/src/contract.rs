@@ -14,6 +14,8 @@ use crate::utils::royalties::{bump_royalties, get_royalties, write_royalties};
 use num_integer::div_floor;
 use soroban_sdk::{contract, contractimpl, panic_with_error, Address, Env, Map, String};
 
+use crate::events;
+
 pub trait CollectibleTrait {
     fn initialize(
         env: Env,
@@ -41,9 +43,13 @@ pub trait CollectibleTrait {
 
     /// Transferring the ownership of a collectible
     fn transfer(env: Env, item_number: u64, to: Address);
+
     fn decimals(e: Env) -> u32;
+
     fn name(e: Env) -> String;
+
     fn symbol(e: Env) -> String;
+
     fn metadata_uri(e: Env) -> String;
 }
 
@@ -150,6 +156,8 @@ impl CollectibleTrait for CollectibleContract {
             let share = div_floor(price * royalty.percentage, 1_0000000);
             collection_currency.transfer(&buyer, &address, &(share as i128));
             royalties_distributed += share;
+
+            events::royalty_payment(&env, item_number.clone(), address, share);
         }
 
         // We set the new owner and increase its balance
@@ -171,6 +179,8 @@ impl CollectibleTrait for CollectibleContract {
         bump_item(&env, &item_number);
         bump_balance(&env, &buyer);
         bump_royalties(&env);
+
+        events::buy(&env, seller, buyer, item_number, price);
     }
 
     fn sell(env: Env, item_number: u64, price: u128) {
@@ -187,6 +197,8 @@ impl CollectibleTrait for CollectibleContract {
         bump_item(&env, &item_number);
         bump_royalties(&env);
         bump_balance(&env, &item.owner);
+
+        events::sell(&env, item.owner, item_number, price);
     }
 
     fn item(env: Env, number: u64) -> Item {
@@ -216,7 +228,7 @@ impl CollectibleTrait for CollectibleContract {
         write_balance(&env, &to, &(new_owner_balance + 1));
 
         // We update the ownership of the item
-        item.owner = to;
+        item.owner = to.clone();
         item.price = 0;
         item.for_sale = false;
         write_item(&env, &item);
@@ -224,6 +236,8 @@ impl CollectibleTrait for CollectibleContract {
         bump_item(&env, &item_number);
         bump_royalties(&env);
         bump_balance(&env, &item.owner);
+
+        events::transfer(&env, item.owner, to, item_number);
     }
 
     fn decimals(e: Env) -> u32 {
