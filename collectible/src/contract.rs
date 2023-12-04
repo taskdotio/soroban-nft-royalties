@@ -106,7 +106,7 @@ impl CollectibleTrait for CollectibleContract {
         get_balance(&env, &id)
     }
 
-    // TODO: something we can improve is the use of "is_minted" and "get_item" so we don't call the storage that often
+    // NOTE: Something we can improve is the use of "is_minted" and "get_item" so we don't call the storage that often
     fn buy(env: Env, buyer: Address, item_number: u64) {
         bump_instance(&env);
         buyer.require_auth();

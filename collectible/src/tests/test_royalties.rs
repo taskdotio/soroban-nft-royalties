@@ -1,7 +1,5 @@
 #![cfg(test)]
 
-use crate::errors::SCErrors;
-use crate::storage::items::Item;
 use crate::tests::test_utils::{create_test_data, init_with_test_data, TestData};
 use soroban_sdk::testutils::Address as _;
 use soroban_sdk::{Address, Env};

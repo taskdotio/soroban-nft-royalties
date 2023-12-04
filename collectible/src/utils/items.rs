@@ -2,7 +2,7 @@ use crate::bumps::{ITEMS_BUMP_CONSTANT, ITEMS_BUMP_CONSTANT_THRESHOLD};
 use crate::errors::SCErrors;
 use crate::storage::core::CoreData;
 use crate::storage::items::{Item, ItemsDataKeys};
-use soroban_sdk::{panic_with_error, Address, Env};
+use soroban_sdk::{panic_with_error, Env};
 
 pub fn bump_item(env: &Env, number: &u64) {
     if env

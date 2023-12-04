@@ -1,5 +1,5 @@
 use crate::storage::core::{CoreData, CoreDataKeys, TokenMetadata};
-use soroban_sdk::{token, Address, Env};
+use soroban_sdk::{token, Env};
 
 use crate::bumps::{INSTANCE_BUMP_CONSTANT, INSTANCE_BUMP_CONSTANT_THRESHOLD};
 
