@@ -2,7 +2,8 @@
 resolver = "2"
 
 members = [
-    "collectible"
+    "collectible",
+    "deployer",
 ]
 
 [profile.release-with-logs]

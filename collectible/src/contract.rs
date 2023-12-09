@@ -17,7 +17,7 @@ use soroban_sdk::{contract, contractimpl, panic_with_error, Address, Env, Map, S
 use crate::events;
 
 pub trait CollectibleTrait {
-    fn initialize(
+    fn init(
         env: Env,
         admin: Address,
         supply: u64,
@@ -58,7 +58,7 @@ pub struct CollectibleContract;
 
 #[contractimpl]
 impl CollectibleTrait for CollectibleContract {
-    fn initialize(
+    fn init(
         env: Env,
         admin: Address,
         supply: u64,

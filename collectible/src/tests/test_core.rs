@@ -11,7 +11,7 @@ pub fn test_init() {
 
     let test_data: TestData = create_test_data(&env);
 
-    test_data.contract_client.initialize(
+    test_data.contract_client.init(
         &test_data.admin,
         &test_data.supply,
         &test_data.initial_price,
@@ -25,7 +25,7 @@ pub fn test_init() {
 
     let already_initiated_error = test_data
         .contract_client
-        .try_initialize(
+        .try_init(
             &test_data.admin,
             &test_data.supply,
             &test_data.initial_price,

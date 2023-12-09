@@ -101,7 +101,7 @@ pub fn create_test_data(env: &Env) -> TestData {
 }
 
 pub fn init_with_test_data(test_data: &TestData) {
-    test_data.contract_client.initialize(
+    test_data.contract_client.init(
         &test_data.admin,
         &test_data.supply,
         &test_data.initial_price,

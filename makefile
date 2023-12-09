@@ -17,3 +17,11 @@ fmt:
 
 clean:
 	cargo clean
+
+launch_standalone:
+	docker run -d -it \
+      -p 8000:8000 \
+      --name stellar-soroban-network \
+      stellar/quickstart:testing@sha256:0c756150e7b3c53603fe36bb932c4e7d7ceaef691906b2d3d952771ccc195559 \
+      --standalone \
+      --enable-soroban-rpc
