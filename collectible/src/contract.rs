@@ -12,7 +12,10 @@ use crate::utils::items::{
 };
 use crate::utils::royalties::{bump_royalties, get_royalties, write_royalties};
 use num_integer::div_floor;
-use soroban_sdk::{contract, contractimpl, panic_with_error, Address, Env, Map, String};
+use soroban_sdk::{
+    contract, contractimpl, panic_with_error, symbol_short, Address, BytesN, Env, Map, String,
+    Symbol,
+};
 
 use crate::events;
 
@@ -29,6 +32,10 @@ pub trait CollectibleTrait {
         metadata_uri: String,
         royalties: Map<Address, Royalty>,
     );
+
+    fn upgrade(env: Env, new_wasm_hash: BytesN<32>);
+
+    fn version(env: Env) -> Symbol;
 
     fn balance(env: Env, id: Address) -> u128;
 
@@ -98,6 +105,17 @@ impl CollectibleTrait for CollectibleContract {
 
         bump_instance(&env);
         bump_royalties(&env);
+    }
+
+    fn upgrade(env: Env, new_wasm_hash: BytesN<32>) {
+        bump_instance(&env);
+        get_core_data(&env).admin.require_auth();
+        env.deployer().update_current_contract_wasm(new_wasm_hash);
+    }
+
+    fn version(env: Env) -> Symbol {
+        bump_instance(&env);
+        symbol_short!("0_0_1")
     }
 
     fn balance(env: Env, id: Address) -> u128 {
@@ -189,7 +207,7 @@ impl CollectibleTrait for CollectibleContract {
         let mut item: Item = get_item(&env, &item_number);
         item.owner.require_auth();
 
-        item.for_sale = if price == 0 { false } else { true };
+        item.for_sale = price != 0;
         item.price = price;
 
         write_item(&env, &item);
