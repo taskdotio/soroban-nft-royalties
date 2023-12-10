@@ -23,6 +23,8 @@ pub fn test_init() {
         &test_data.default_royalties,
     );
 
+    assert_eq!(test_data.contract_client.supply(), test_data.supply);
+
     let already_initiated_error = test_data
         .contract_client
         .try_init(

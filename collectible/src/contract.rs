@@ -58,6 +58,10 @@ pub trait CollectibleTrait {
     fn symbol(e: Env) -> String;
 
     fn metadata_uri(e: Env) -> String;
+
+    fn royalties(e: Env) -> Map<Address, Royalty>;
+
+    fn supply(e: Env) -> u64;
 }
 
 #[contract]
@@ -276,5 +280,15 @@ impl CollectibleTrait for CollectibleContract {
     fn metadata_uri(e: Env) -> String {
         bump_instance(&e);
         get_metadata(&e).metadata_uri
+    }
+
+    fn royalties(e: Env) -> Map<Address, Royalty> {
+        bump_instance(&e);
+        get_royalties(&e)
+    }
+
+    fn supply(e: Env) -> u64 {
+        bump_instance(&e);
+        get_core_data(&e).supply
     }
 }
