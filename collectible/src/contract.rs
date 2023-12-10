@@ -20,6 +20,8 @@ use soroban_sdk::{
 use crate::events;
 
 pub trait CollectibleTrait {
+    /// This function starts the contract with data that can't be updated later without doing a full upgrade
+    /// If this function hasn't been called, most functions won't work
     fn init(
         env: Env,
         admin: Address,
@@ -35,20 +37,29 @@ pub trait CollectibleTrait {
 
     fn upgrade(env: Env, new_wasm_hash: BytesN<32>);
 
+    /// This method could be used to know which version of the smart contract a collectible is using, making it easy if they want to upgrade later
     fn version(env: Env) -> Symbol;
 
+    /// Balance of an account, it defaults to "0" even if the account has never interacted with this contract
+    /// The balance is the total amount across all the collectibles, for example if an account owns "5" different collectibles from this contract, the balance will return "5"
     fn balance(env: Env, id: Address) -> u128;
 
+    /// The function to buy items that are for sale, if it's the "first sale" of the item, the contract will send the payment to the "initial_seller"
+    /// If an item is not for sale it will throw an error
     fn buy(env: Env, buyer: Address, item_number: u64);
 
-    /// - Use this function when you want to offer one of your Items
-    /// - You must be the owner of the Item
-    /// - Setting the price to "0" is equal to cancelling the offer
+    /// Use this function when you want to offer one of your Items
+    /// You must be the owner of the Item
+    /// Setting the price to "0" is equal to cancelling the offer
     fn sell(env: Env, item_number: u64, price: u128);
 
+    /// Returns the specific Item, if the item hasn't been sold for the first time it will throw an error
+    /// This function can be used to know if an Item is currently for sale
     fn item(env: Env, number: u64) -> Item;
 
     /// Transferring the ownership of a collectible
+    /// The owner of the collectible is used as required authorization
+    /// This function doesn't trigger the royalty payments
     fn transfer(env: Env, item_number: u64, to: Address);
 
     fn decimals(e: Env) -> u32;
