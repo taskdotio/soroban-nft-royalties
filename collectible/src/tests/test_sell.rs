@@ -3,7 +3,7 @@
 use crate::errors::SCErrors;
 use crate::storage::items::Item;
 use crate::tests::test_utils::{create_test_data, init_with_test_data, TestData};
-use soroban_sdk::arbitrary::std;
+use soroban_sdk::testutils::arbitrary::std;
 use soroban_sdk::testutils::{Address as _, AuthorizedFunction, AuthorizedInvocation};
 use soroban_sdk::{Address, Env, IntoVal, Symbol};
 
@@ -30,7 +30,7 @@ pub fn test_sell_logic() {
     let test_data: TestData = create_test_data(&env);
     init_with_test_data(&test_data);
 
-    let owner: Address = Address::random(&env);
+    let owner: Address = Address::generate(&env);
 
     test_data
         .usd_token_admin_client

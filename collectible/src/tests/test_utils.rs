@@ -38,25 +38,25 @@ pub struct TestData<'a> {
 }
 
 pub fn create_test_data(env: &Env) -> TestData {
-    let admin: Address = Address::random(&env);
+    let admin: Address = Address::generate(&env);
     let supply: u64 = 150u64;
 
     let mut default_royalties: Map<Address, Royalty> = Map::new(&env);
     let platform_royalty: Royalty = Royalty {
-        name: String::from_slice(&env, "ThePlatform"),
-        address: Address::random(&env),
+        name: String::from_str(&env, "ThePlatform"),
+        address: Address::generate(&env),
         first_sale: true,
         percentage: 0_0100000,
     };
     let creator_royalty: Royalty = Royalty {
-        name: String::from_slice(&env, "TheCreator"),
-        address: Address::random(&env),
+        name: String::from_str(&env, "TheCreator"),
+        address: Address::generate(&env),
         first_sale: false,
         percentage: 0_0300000,
     };
     let charity_royalty: Royalty = Royalty {
-        name: String::from_slice(&env, "TheCharity"),
-        address: Address::random(&env),
+        name: String::from_str(&env, "TheCharity"),
+        address: Address::generate(&env),
         first_sale: false,
         percentage: 0_0200000,
     };
@@ -65,16 +65,16 @@ pub fn create_test_data(env: &Env) -> TestData {
     default_royalties.set(creator_royalty.address.clone(), creator_royalty.clone());
     default_royalties.set(charity_royalty.address.clone(), charity_royalty.clone());
 
-    let usd_token_admin: Address = Address::random(&env);
+    let usd_token_admin: Address = Address::generate(&env);
     let (usd_token_client, usd_token_admin_client) = create_token_contract(&env, &usd_token_admin);
-    let eur_token_admin: Address = Address::random(&env);
+    let eur_token_admin: Address = Address::generate(&env);
     let (eur_token_client, eur_token_admin_client) = create_token_contract(&env, &eur_token_admin);
 
     let contract_client =
         CollectibleContractClient::new(&env, &env.register_contract(None, CollectibleContract));
 
     let initial_price: u128 = 19_9900000u128;
-    let initial_seller: Address = Address::random(&env);
+    let initial_seller: Address = Address::generate(&env);
 
     TestData {
         admin,
@@ -82,9 +82,9 @@ pub fn create_test_data(env: &Env) -> TestData {
         initial_price,
         initial_seller,
         token_metadata: TokenMetadata {
-            name: String::from_slice(&env, "GoldMiners"),
-            symbol: String::from_slice(&env, "GMS"),
-            metadata_uri: String::from_slice(&env, "https://kjgutsr.dfghuexvhj.net/userdata/GDVT45B2WLFKQS3XB5MUYHV3WCGEX5W2QPDLBOAIPC3MWHATI34VOULF.jpg"),
+            name: String::from_str(&env, "GoldMiners"),
+            symbol: String::from_str(&env, "GMS"),
+            metadata_uri: String::from_str(&env, "https://kjgutsr.dfghuexvhj.net/userdata/GDVT45B2WLFKQS3XB5MUYHV3WCGEX5W2QPDLBOAIPC3MWHATI34VOULF.jpg"),
         },
         default_royalties,
         platform_royalty,

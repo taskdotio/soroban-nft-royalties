@@ -10,7 +10,7 @@ pub fn bump_item(env: &Env, number: &u64) {
         .persistent()
         .has(&ItemsDataKeys::Item(number.clone()))
     {
-        env.storage().persistent().bump(
+        env.storage().persistent().extend_ttl(
             &ItemsDataKeys::Item(number.clone()),
             ITEMS_BUMP_CONSTANT_THRESHOLD,
             ITEMS_BUMP_CONSTANT,

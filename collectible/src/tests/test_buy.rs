@@ -14,7 +14,7 @@ pub fn test_initial_sale_and_invalid_number() {
     let test_data: TestData = create_test_data(&env);
     init_with_test_data(&test_data);
 
-    let buyer: Address = Address::random(&env);
+    let buyer: Address = Address::generate(&env);
     test_data
         .usd_token_admin_client
         .mint(&buyer, &(test_data.initial_price as i128));
@@ -29,7 +29,7 @@ pub fn test_initial_sale_and_invalid_number() {
     assert_eq!(item.number, 0);
     assert_eq!(item.for_sale, false);
 
-    let new_buyer: Address = Address::random(&env);
+    let new_buyer: Address = Address::generate(&env);
     let not_for_sale_error = test_data
         .contract_client
         .try_buy(&new_buyer, &(test_data.supply + 100))
@@ -47,7 +47,7 @@ pub fn test_second_sales_and_not_sale() {
     let test_data: TestData = create_test_data(&env);
     init_with_test_data(&test_data);
 
-    let buyer: Address = Address::random(&env);
+    let buyer: Address = Address::generate(&env);
     test_data
         .usd_token_admin_client
         .mint(&buyer, &(test_data.initial_price as i128));
@@ -58,7 +58,7 @@ pub fn test_second_sales_and_not_sale() {
 
     assert_eq!(test_data.contract_client.balance(&buyer), 1u128);
 
-    let new_buyer: Address = Address::random(&env);
+    let new_buyer: Address = Address::generate(&env);
     let not_for_sale_error = test_data
         .contract_client
         .try_buy(&new_buyer, &0)
