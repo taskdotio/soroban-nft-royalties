@@ -3,10 +3,10 @@ use soroban_sdk::{contracttype, Address, String};
 #[contracttype]
 #[derive(Clone)]
 pub struct Royalty {
-    pub name: String,
     pub address: Address,
-    pub percentage: u128,
     pub first_sale: bool,
+    pub name: String,
+    pub percentage: u128,
 }
 
 #[contracttype]

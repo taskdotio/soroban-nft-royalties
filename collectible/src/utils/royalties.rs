@@ -1,6 +1,6 @@
 use crate::bumps::{ROYALTIES_BUMP_CONSTANT, ROYALTIES_BUMP_CONSTANT_THRESHOLD};
 use crate::storage::royalties::{RoyaltiesDataKeys, Royalty};
-use soroban_sdk::{Address, Env, Map};
+use soroban_sdk::{Env, Vec};
 
 pub fn bump_royalties(env: &Env) {
     env.storage().persistent().bump(
@@ -10,15 +10,15 @@ pub fn bump_royalties(env: &Env) {
     );
 }
 
-pub fn write_royalties(env: &Env, royalties: &Map<Address, Royalty>) {
+pub fn write_royalties(env: &Env, royalties: &Vec<Royalty>) {
     env.storage()
         .persistent()
         .set(&RoyaltiesDataKeys::Royalties, royalties)
 }
 
-pub fn get_royalties(env: &Env) -> Map<Address, Royalty> {
+pub fn get_royalties(env: &Env) -> Vec<Royalty> {
     env.storage()
         .persistent()
-        .get::<RoyaltiesDataKeys, Map<Address, Royalty>>(&RoyaltiesDataKeys::Royalties)
+        .get(&RoyaltiesDataKeys::Royalties)
         .unwrap()
 }

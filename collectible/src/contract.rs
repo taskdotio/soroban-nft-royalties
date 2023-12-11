@@ -13,8 +13,8 @@ use crate::utils::items::{
 use crate::utils::royalties::{bump_royalties, get_royalties, write_royalties};
 use num_integer::div_floor;
 use soroban_sdk::{
-    contract, contractimpl, panic_with_error, symbol_short, Address, BytesN, Env, Map, String,
-    Symbol,
+    contract, contractimpl, panic_with_error, symbol_short, Address, BytesN, Env, String, Symbol,
+    Vec,
 };
 
 use crate::events;
@@ -32,7 +32,7 @@ pub trait CollectibleTrait {
         name: String,
         symbol: String,
         metadata_uri: String,
-        royalties: Map<Address, Royalty>,
+        royalties: Vec<Royalty>,
     );
 
     fn upgrade(env: Env, new_wasm_hash: BytesN<32>);
@@ -70,7 +70,7 @@ pub trait CollectibleTrait {
 
     fn metadata_uri(e: Env) -> String;
 
-    fn royalties(e: Env) -> Map<Address, Royalty>;
+    fn royalties(e: Env) -> Vec<Royalty>;
 
     fn supply(e: Env) -> u64;
 }
@@ -90,7 +90,7 @@ impl CollectibleTrait for CollectibleContract {
         name: String,
         symbol: String,
         metadata_uri: String,
-        royalties: Map<Address, Royalty>,
+        royalties: Vec<Royalty>,
     ) {
         if is_initialized(&env) {
             panic_with_error!(&env, &SCErrors::AlreadyInitialized);
@@ -164,7 +164,7 @@ impl CollectibleTrait for CollectibleContract {
             bump_balance(&env, &item.owner);
         }
 
-        let royalties: Map<Address, Royalty> = get_royalties(&env);
+        let royalties: Vec<Royalty> = get_royalties(&env);
 
         let collection_currency = collection_currency(&env, &core_data);
         let price: u128 = if is_minted_val {
@@ -180,17 +180,17 @@ impl CollectibleTrait for CollectibleContract {
 
         // We distribute the royalties and we pay the owner
         let mut royalties_distributed: u128 = 0u128;
-        for (address, royalty) in royalties.iter() {
+        for royalty in royalties.iter() {
             if is_minted_val && royalty.first_sale {
                 // If is already minted, it means this is not a first sale so we ignore this distribution for second sales
                 continue;
             }
 
             let share = div_floor(price * royalty.percentage, 1_0000000);
-            collection_currency.transfer(&buyer, &address, &(share as i128));
+            collection_currency.transfer(&buyer, &royalty.address, &(share as i128));
             royalties_distributed += share;
 
-            events::royalty_payment(&env, item_number.clone(), address, share);
+            events::royalty_payment(&env, item_number.clone(), royalty.address, share);
         }
 
         // We set the new owner and increase its balance
@@ -293,7 +293,7 @@ impl CollectibleTrait for CollectibleContract {
         get_metadata(&e).metadata_uri
     }
 
-    fn royalties(e: Env) -> Map<Address, Royalty> {
+    fn royalties(e: Env) -> Vec<Royalty> {
         bump_instance(&e);
         get_royalties(&e)
     }

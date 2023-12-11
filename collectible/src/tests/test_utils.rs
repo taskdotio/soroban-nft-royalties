@@ -4,7 +4,7 @@ use crate::contract::{CollectibleContract, CollectibleContractClient};
 use crate::storage::core::TokenMetadata;
 use crate::storage::royalties::Royalty;
 use soroban_sdk::testutils::Address as _;
-use soroban_sdk::{token, Address, Env, Map, String};
+use soroban_sdk::{token, Address, Env, String, Vec};
 use token::Client as TokenClient;
 use token::StellarAssetClient as TokenAdminClient;
 
@@ -22,7 +22,7 @@ pub struct TestData<'a> {
     pub initial_price: u128,
     pub initial_seller: Address,
     pub token_metadata: TokenMetadata,
-    pub default_royalties: Map<Address, Royalty>,
+    pub default_royalties: Vec<Royalty>,
     pub platform_royalty: Royalty,
     pub creator_royalty: Royalty,
     pub charity_royalty: Royalty,
@@ -41,7 +41,7 @@ pub fn create_test_data(env: &Env) -> TestData {
     let admin: Address = Address::random(&env);
     let supply: u64 = 150u64;
 
-    let mut default_royalties: Map<Address, Royalty> = Map::new(&env);
+    let mut default_royalties: Vec<Royalty> = Vec::new(&env);
     let platform_royalty: Royalty = Royalty {
         name: String::from_slice(&env, "ThePlatform"),
         address: Address::random(&env),
@@ -61,9 +61,9 @@ pub fn create_test_data(env: &Env) -> TestData {
         percentage: 0_0200000,
     };
 
-    default_royalties.set(platform_royalty.address.clone(), platform_royalty.clone());
-    default_royalties.set(creator_royalty.address.clone(), creator_royalty.clone());
-    default_royalties.set(charity_royalty.address.clone(), charity_royalty.clone());
+    default_royalties.push_back(platform_royalty.clone());
+    default_royalties.push_back(creator_royalty.clone());
+    default_royalties.push_back(charity_royalty.clone());
 
     let usd_token_admin: Address = Address::random(&env);
     let (usd_token_client, usd_token_admin_client) = create_token_contract(&env, &usd_token_admin);
