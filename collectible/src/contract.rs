@@ -164,6 +164,8 @@ impl CollectibleTrait for CollectibleContract {
             bump_balance(&env, &item.owner);
         }
 
+        let royalties: Map<Address, Royalty> = get_royalties(&env);
+
         let collection_currency = collection_currency(&env, &core_data);
         let price: u128 = if is_minted_val {
             get_item(&env, &item_number).price
@@ -175,8 +177,6 @@ impl CollectibleTrait for CollectibleContract {
         } else {
             core_data.initial_seller
         };
-
-        let royalties: Map<Address, Royalty> = get_royalties(&env);
 
         // We distribute the royalties and we pay the owner
         let mut royalties_distributed: u128 = 0u128;

@@ -13,7 +13,7 @@ pub fn test_transferring_ownership() {
     let test_data: TestData = create_test_data(&env);
     init_with_test_data(&test_data);
 
-    let buyer: Address = Address::generate(&env);
+    let buyer: Address = Address::random(&env);
     test_data
         .usd_token_admin_client
         .mint(&buyer, &(test_data.initial_price as i128));
@@ -27,7 +27,7 @@ pub fn test_transferring_ownership() {
     // Let's just test for the sake of it that if we had it as an offer it will get reset once is transferred
     test_data.contract_client.sell(&5, &50_0000000);
 
-    let new_owner: Address = Address::generate(&env);
+    let new_owner: Address = Address::random(&env);
 
     test_data.contract_client.transfer(&5, &new_owner);
 

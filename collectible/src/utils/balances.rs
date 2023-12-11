@@ -8,7 +8,7 @@ pub fn bump_balance(env: &Env, id: &Address) {
         .persistent()
         .has(&BalancesDataKeys::Balance(id.clone()))
     {
-        env.storage().persistent().extend_ttl(
+        env.storage().persistent().bump(
             &BalancesDataKeys::Balance(id.clone()),
             BALANCES_BUMP_CONSTANT_THRESHOLD,
             BALANCES_BUMP_CONSTANT,

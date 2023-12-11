@@ -6,7 +6,7 @@ use crate::bumps::{INSTANCE_BUMP_CONSTANT, INSTANCE_BUMP_CONSTANT_THRESHOLD};
 pub fn bump_instance(env: &Env) {
     env.storage()
         .instance()
-        .extend_ttl(INSTANCE_BUMP_CONSTANT_THRESHOLD, INSTANCE_BUMP_CONSTANT);
+        .bump(INSTANCE_BUMP_CONSTANT_THRESHOLD, INSTANCE_BUMP_CONSTANT);
 }
 
 pub fn is_initialized(env: &Env) -> bool {

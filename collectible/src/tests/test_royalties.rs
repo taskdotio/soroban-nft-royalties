@@ -12,7 +12,7 @@ pub fn test_royalties_and_payments() {
     let test_data: TestData = create_test_data(&env);
     init_with_test_data(&test_data);
 
-    let buyer: Address = Address::generate(&env);
+    let buyer: Address = Address::random(&env);
     test_data
         .usd_token_admin_client
         .mint(&buyer, &(test_data.initial_price as i128));
@@ -46,7 +46,7 @@ pub fn test_royalties_and_payments() {
 
     test_data.contract_client.sell(&0, &50_0000000);
 
-    let new_buyer: Address = Address::generate(&env);
+    let new_buyer: Address = Address::random(&env);
 
     test_data
         .usd_token_admin_client

@@ -10,7 +10,7 @@ pub fn test_zero_balances() {
     let test_data: TestData = create_test_data(&env);
     init_with_test_data(&test_data);
 
-    let address: Address = Address::generate(&env);
+    let address: Address = Address::random(&env);
 
     assert_eq!(0u128, test_data.contract_client.balance(&address));
 }

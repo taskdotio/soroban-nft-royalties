@@ -3,7 +3,7 @@ use crate::storage::royalties::{RoyaltiesDataKeys, Royalty};
 use soroban_sdk::{Address, Env, Map};
 
 pub fn bump_royalties(env: &Env) {
-    env.storage().persistent().extend_ttl(
+    env.storage().persistent().bump(
         &RoyaltiesDataKeys::Royalties,
         ROYALTIES_BUMP_CONSTANT_THRESHOLD,
         ROYALTIES_BUMP_CONSTANT,
