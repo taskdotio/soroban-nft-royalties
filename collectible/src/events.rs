@@ -15,6 +15,11 @@ pub(crate) fn transfer(env: &Env, from: Address, to: Address, item_id: u64) {
     env.events().publish(topics, item_id);
 }
 
+pub(crate) fn mint(env: &Env, to: Address, item_id: u64) {
+    let topics = (symbol_short!("transfer"), to);
+    env.events().publish(topics, item_id);
+}
+
 pub(crate) fn royalty_payment(env: &Env, item_id: u64, to: Address, amount: u128) {
     let topics = (symbol_short!("royalty"), to);
     env.events().publish(topics, (item_id, amount));

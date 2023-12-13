@@ -62,6 +62,11 @@ pub trait CollectibleTrait {
     /// This function doesn't trigger the royalty payments
     fn transfer(env: Env, item_number: u64, to: Address);
 
+    /// Similar to the transfer function but from the point of view of the initial_seller
+    /// This "mints" an Item to the new owner, this means that if an item already exists we can not mint it again
+    /// This function doesn't trigger the royalty payments
+    fn mint(env: Env, item_number: u64, to: Address);
+
     fn decimals(e: Env) -> u32;
 
     fn name(e: Env) -> String;
@@ -271,6 +276,38 @@ impl CollectibleTrait for CollectibleContract {
         bump_balance(&env, &item.owner);
 
         events::transfer(&env, item.owner, to, item_number);
+    }
+
+    fn mint(e: Env, item_number: u64, to: Address) {
+        bump_instance(&e);
+
+        let core_data: CoreData = get_core_data(&e);
+        core_data.initial_seller.require_auth();
+
+        if is_minted(&e, &item_number) {
+            panic_with_error!(&e, &SCErrors::ItemWasAlreadyMinted);
+        }
+
+        // We now increase new owner balance
+        let new_owner_balance: u128 = get_balance(&e, &to);
+        write_balance(&e, &to, &(new_owner_balance + 1));
+
+        // We set the new owner and increase its balance
+        write_item(
+            &e,
+            &Item {
+                number: item_number.clone(),
+                for_sale: false,
+                owner: to.clone(),
+                price: 0,
+            },
+        );
+
+        bump_item(&e, &item_number);
+        bump_balance(&e, &to);
+        bump_royalties(&e);
+
+        events::mint(&e, to, item_number);
     }
 
     fn decimals(e: Env) -> u32 {

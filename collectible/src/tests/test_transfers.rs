@@ -2,8 +2,9 @@
 
 use crate::storage::items::Item;
 use crate::tests::test_utils::{create_test_data, init_with_test_data, TestData};
-use soroban_sdk::testutils::Address as _;
-use soroban_sdk::{Address, Env};
+use soroban_sdk::arbitrary::std;
+use soroban_sdk::testutils::{Address as _, AuthorizedFunction, AuthorizedInvocation};
+use soroban_sdk::{symbol_short, Address, Env, IntoVal};
 
 #[test]
 pub fn test_transferring_ownership() {
@@ -34,4 +35,43 @@ pub fn test_transferring_ownership() {
     item = test_data.contract_client.item(&5);
 
     assert_eq!(&item.owner, &new_owner);
+}
+
+#[test]
+pub fn test_transferring_by_minting() {
+    let env: Env = Env::default();
+    env.mock_all_auths();
+
+    let test_data: TestData = create_test_data(&env);
+    init_with_test_data(&test_data);
+
+    let recipient: Address = Address::random(&env);
+
+    assert_eq!(&test_data.contract_client.balance(&recipient), &0);
+
+    test_data.contract_client.mint(&10, &recipient);
+
+    assert_eq!(
+        env.auths().last().unwrap(),
+        &(
+            test_data.initial_seller,
+            AuthorizedInvocation {
+                function: AuthorizedFunction::Contract((
+                    test_data.contract_client.address.clone(),
+                    symbol_short!("mint"),
+                    (10u64, recipient.clone()).into_val(&env),
+                )),
+                sub_invocations: std::vec![],
+            }
+        )
+    );
+
+    assert_eq!(&test_data.contract_client.balance(&recipient), &1);
+
+    let item: Item = test_data.contract_client.item(&10);
+
+    assert_eq!(&item.owner, &recipient);
+    assert_eq!(&item.for_sale, &false);
+    assert_eq!(&item.number, &10);
+    assert_eq!(&item.price, &0);
 }

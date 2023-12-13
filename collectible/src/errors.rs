@@ -9,4 +9,5 @@ pub enum SCErrors {
     ItemHasNotBeenMinted = 2,
     ItemNumberIsInvalid = 3,
     ItemIsNotForSale = 4,
+    ItemWasAlreadyMinted = 5,
 }
