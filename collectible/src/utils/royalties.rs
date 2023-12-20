@@ -3,7 +3,7 @@ use crate::storage::royalties::{RoyaltiesDataKeys, Royalty};
 use soroban_sdk::{Env, Vec};
 
 pub fn bump_royalties(env: &Env) {
-    env.storage().persistent().bump(
+    env.storage().persistent().extend_ttl(
         &RoyaltiesDataKeys::Royalties,
         ROYALTIES_BUMP_CONSTANT_THRESHOLD,
         ROYALTIES_BUMP_CONSTANT,

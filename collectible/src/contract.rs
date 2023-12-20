@@ -78,6 +78,9 @@ pub trait CollectibleTrait {
     fn royalties(e: Env) -> Vec<Royalty>;
 
     fn supply(e: Env) -> u64;
+
+    fn core_data(e: Env) -> CoreData;
+    fn token_metadata(e: Env) -> TokenMetadata;
 }
 
 #[contract]
@@ -338,5 +341,15 @@ impl CollectibleTrait for CollectibleContract {
     fn supply(e: Env) -> u64 {
         bump_instance(&e);
         get_core_data(&e).supply
+    }
+
+    fn core_data(e: Env) -> CoreData {
+        bump_instance(&e);
+        get_core_data(&e)
+    }
+
+    fn token_metadata(e: Env) -> TokenMetadata {
+        bump_instance(&e);
+        get_metadata(&e)
     }
 }

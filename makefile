@@ -11,6 +11,7 @@ build:
 build-optimized:
 	soroban contract build
 	soroban contract optimize --wasm ./target/wasm32-unknown-unknown/release/collectible.wasm --wasm-out ./target/wasm32-unknown-unknown/release/collectible.wasm
+	soroban contract optimize --wasm ./target/wasm32-unknown-unknown/release/deployer.wasm --wasm-out ./target/wasm32-unknown-unknown/release/deployer.wasm
 
 fmt:
 	cargo fmt --all
