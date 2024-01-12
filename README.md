@@ -6,6 +6,12 @@ This repository hosts smart contracts developed for managing Non-Fungible Tokens
 
 Our Testnet service is now live and we are anticipating going fully live shortly after the Stellar Soroban Mainnet launch. The contracts herein power NFT functionalities on The Blue Marble and are part of an initiative to foster standardization and cross-compatibility among different NFT platforms on the Stellar Network.
 
+## How to play
+
+We use a bridging API for our main core services to interact with the Soroban RPC server.
+
+You can access the API here: https://sp68rqerzy.eu-west-1.awsapprunner.com/openapi#/
+
 ## Contributing
 
 We welcome collaborations from the Stellar Community to enhance interoperability and standardize NFT operations on Stellar.
