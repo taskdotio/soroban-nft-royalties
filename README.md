@@ -1,4 +1,4 @@
-Soroban NFT Royalties Smart Contracts
+# Soroban NFT Royalties Smart Contracts
 
 This repository hosts smart contracts developed for managing Non-Fungible Tokens (NFTs) and their associated royalties on the Stellar Network, particularly for [The Blue Marble platform](https://thebluemarble.io). Our contracts facilitate not only the entitlement of creators but also the distribution of trade revenue to third parties like non-profits or charities.
 
